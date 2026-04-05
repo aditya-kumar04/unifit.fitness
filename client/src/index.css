@@ -1,0 +1,189 @@
+@import url('https://fonts.googleapis.com/css2?family=Anton&family=Bebas+Neue&family=Barlow+Condensed:ital,wght@0,300;0,400;0,600;1,400&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300;1,400&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ── Scrollbar ── */
+::-webkit-scrollbar { width: 5px; }
+::-webkit-scrollbar-track { background: #060203; }
+::-webkit-scrollbar-thumb { background: #1e1e1e; border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: #E63946; }
+
+/* ── Body entry animation ── */
+body {
+  animation: bodyIn 0.7s ease both;
+}
+@keyframes bodyIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+/* ── Noise overlay ── */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='1'/%3E%3C/svg%3E");
+  opacity: 0.022;
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* ── Scroll reveal ── */
+.reveal {
+  opacity: 0;
+  transform: translateY(30px);
+  transition: opacity 0.75s cubic-bezier(.22,1,.36,1), transform 0.75s cubic-bezier(.22,1,.36,1);
+}
+.reveal.visible { opacity: 1; transform: translateY(0); }
+
+.reveal-left {
+  opacity: 0;
+  transform: translateX(-30px);
+  transition: opacity 0.75s cubic-bezier(.22,1,.36,1), transform 0.75s cubic-bezier(.22,1,.36,1);
+}
+.reveal-left.visible { opacity: 1; transform: translateX(0); }
+
+.reveal-right {
+  opacity: 0;
+  transform: translateX(30px);
+  transition: opacity 0.75s cubic-bezier(.22,1,.36,1), transform 0.75s cubic-bezier(.22,1,.36,1);
+}
+.reveal-right.visible { opacity: 1; transform: translateX(0); }
+
+/* ── Buttons ── */
+.btn-primary {
+  background: #E63946;
+  color: #fff;
+  transition: background 0.2s, transform 0.18s, box-shadow 0.18s;
+}
+.btn-primary:hover {
+  background: #c8313d;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 30px rgba(230,57,70,0.35);
+}
+.btn-primary:active { transform: translateY(0); }
+
+.btn-ghost {
+  background: transparent;
+  border: 1px solid #252525;
+  color: #777;
+  transition: border-color 0.2s, color 0.2s, transform 0.18s;
+}
+.btn-ghost:hover { border-color: #444; color: #fff; transform: translateY(-2px); }
+
+/* ── Card hover ── */
+.card {
+  transition: transform 0.28s ease, border-color 0.28s ease, box-shadow 0.28s ease;
+}
+.card:hover {
+  transform: translateY(-4px);
+  border-color: #2a2a2a !important;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.55);
+}
+
+/* ── Ticker ── */
+@keyframes ticker {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-50%); }
+}
+.ticker-inner { animation: ticker 28s linear infinite; }
+.ticker-wrap:hover .ticker-inner { animation-play-state: paused; }
+
+/* ── Hero pulse ── */
+@keyframes glowPulse {
+  0%, 100% { text-shadow: 0 0 60px rgba(230,57,70,0.18); }
+  50%       { text-shadow: 0 0 90px rgba(230,57,70,0.35); }
+}
+.hero-quote { animation: glowPulse 4s ease-in-out infinite; }
+
+/* ── Shimmer ── */
+@keyframes shimmer {
+  0%   { background-position: -200% center; }
+  100% { background-position: 200% center; }
+}
+.award-badge {
+  background: linear-gradient(90deg, #1a1a1a 25%, #2a2a2a 50%, #1a1a1a 75%);
+  background-size: 200% auto;
+  animation: shimmer 3s linear infinite;
+}
+
+/* ── Other ── */
+.vertical-text { writing-mode: vertical-rl; text-orientation: mixed; }
+.quote-decor {
+  font-family: 'Georgia', serif;
+  font-size: 120px;
+  line-height: 0.8;
+  color: rgba(230,57,70,0.12);
+  user-select: none;
+  pointer-events: none;
+}
+.red-line { width: 40px; height: 2px; background: #E63946; display: block; }
+
+/* ── Chart line draw ── */
+@keyframes drawLine {
+  to { stroke-dashoffset: 0; }
+}
+.chart-line {
+  stroke-dasharray: 600;
+  stroke-dashoffset: 600;
+  animation: drawLine 1.8s ease forwards 0.4s;
+}
+
+/* ── Fade in ── */
+.fade-in { animation: fadeIn 0.4s ease both; }
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── Task row ── */
+.task-row { transition: background 0.15s; }
+.task-row:hover { background: rgba(255,255,255,0.02); }
+
+/* ── Bubble in ── */
+.bubble-in { animation: bubbleIn 0.3s ease forwards; }
+@keyframes bubbleIn {
+  from { opacity: 0; transform: translateY(8px) scale(0.98); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* ── Meal card ── */
+.meal-card { animation: slideUp 0.35s ease both; }
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── Progress bar (reading indicator) ── */
+#progress-bar {
+  position: fixed;
+  top: 68px;
+  left: 0;
+  height: 2px;
+  background: #E63946;
+  z-index: 99;
+  transition: width 0.1s linear;
+  width: 0%;
+}
+
+/* ── Client card (mentor panel) ── */
+.client-card { border: 1px solid #1A1A1A; transition: border-color 0.15s, background 0.15s; }
+.client-card:hover { border-color: #2a2a2a; }
+.client-card.active { border-color: #E63946; background: rgba(230,57,70,0.06); }
+
+/* ── Modal ── */
+.modal-wrap { display: none; }
+.modal-wrap.open { display: flex; }
+
+/* ── Step panel (onboarding) ── */
+.step-panel { display: none; animation: panelIn 0.4s ease; }
+.step-panel.active { display: block; }
+@keyframes panelIn {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Selection */
+::selection { background: #E63946; color: white; }
