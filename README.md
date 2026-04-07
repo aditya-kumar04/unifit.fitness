@@ -1,51 +1,49 @@
-# UNIFIT — 30-Day Transformation Platform
+# UNIFIT - Complete Fitness Platform
 
-A modern, premium fitness and transformation platform designed with a pristine, Apple/Notion-inspired dark aesthetic. This project is a complete migration of a static HTML/Tailwind CDN prototype into a fully functional **Vite + React** single-page application.
+A production-ready, enterprise-grade fitness platform with real-time capabilities, advanced analytics, and comprehensive user management.
 
-## Tech Stack
+## **Overview**
 
-- **Framework:** React 18 + Vite
-- **Routing:** React Router DOM v6
-- **Styling:** Tailwind CSS v3
-- **Icons:** Iconify for React (`@iconify/react`)
-- **Typography:** DM Sans, Bebas Neue, Barlow Condensed, Anton (via Google Fonts)
+UNIFIT is a full-stack fitness application that connects students with mentors, providing workout tracking, nutrition planning, progress monitoring, and real-time communication. Built with modern technologies and production-ready optimizations.
 
-## Project Structure
+## **Features**
 
-The project is structured entirely within the `client/` folder:
+### **Core Functionality**
+- **User Authentication**: JWT-based login/register with role-based access control
+- **Workout Tracking**: Complete workout plans with progress tracking
+- **Nutrition Management**: Food database, meal logging, and calorie tracking
+- **Progress Monitoring**: Photo uploads, weight tracking, and analytics
+- **Real-time Chat**: Mentor-student communication with typing indicators
+- **Booking System**: Schedule sessions with mentors
+- **Notifications**: Real-time alerts and achievement notifications
 
-```
-client/
-├── public/               # Static assets
-├── src/
-│   ├── components/       # Shared UI components
-│   │   ├── Navbar.jsx    # Configurable global top navigation
-│   │   └── Footer.jsx    # Global footer (full & minimal variants)
-│   ├── pages/            # View components mapping directly to routes
-│   │   ├── Landing.jsx   # /           - Hero, features, pricing, testimonials
-│   │   ├── Onboarding.jsx# /onboarding - 3-step interactive setup wizard
-│   │   ├── Dashboard.jsx # /dashboard  - Daily tasks, macros, current streak
-│   │   ├── Chat.jsx      # /chat       - Mentor direct messaging simulator
-│   │   ├── Calories.jsx  # /calories   - AI food lookup and water tracking
-│   │   ├── Progress.jsx  # /progress   - SVG weight chart and photo tracking
-│   │   ├── Booking.jsx   # /booking    - Strategy call scheduling calendar
-│   │   └── MentorPanel.jsx # /mentor   - Administrative dashboard for coaches
-│   ├── App.jsx           # Master route configuration
-│   ├── index.css         # Global Tailwind directives, keyframes, utilities
-│   └── main.jsx          # React DOM entry point
-├── tailwind.config.js    # Tailwind v3 config & theme extension
-└── vite.config.js        # Vite bundler config
-```
+### **Advanced Features**
+- **Real-time Communication**: WebSocket-based chat and notifications
+- **Advanced Analytics**: Comprehensive dashboards for mentors and admins
+- **File Uploads**: Progress photos with categorization and storage
+- **Performance Monitoring**: System metrics and user analytics
+- **Caching System**: Intelligent caching for optimal performance
+- **Production Logging**: Structured logging with file rotation
 
-## Features & Functionality
+## **Technology Stack**
 
-This is a prototype focusing heavily on UI/UX with simulated local state (`useState`):
+### **Backend**
+- **Node.js** - Runtime environment
+- **Express.js** - Web framework
+- **MongoDB Atlas** - Database
+- **Mongoose** - ODM
+- **Socket.IO** - Real-time communication
+- **JWT** - Authentication
+- **Winston** - Logging
+- **Multer** - File uploads
+- **NodeCache** - Caching
 
-- **Scroll Reveal Animations:** Custom intersection observer hooks triggering CSS transform/opacity reveals on scroll.
-- **Interactive Forms:** Multi-step boarding flow preserving state across "Goal", "Profile", and "Mentor Assignment" steps.
-- **Simulated Chat:** Real-time UI updating with typing indicators and delayed automatic responses from the "Mentor".
-- **Dynamic Data Visualization:** Hand-coded responsive SVG charts graphing simulated weight loss progress.
-- **Calorie Tracking:** Keyword extraction checking input strings against a local mock database to log "macros" (Protein, Carbs, Fats).
+### **Frontend**
+- **React** - UI framework
+- **React Router** - Navigation
+- **Tailwind CSS** - Styling
+- **Axios** - HTTP client
+- **Socket.IO Client** - Real-time communication
 
 ## Getting Started
 

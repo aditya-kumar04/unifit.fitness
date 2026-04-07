@@ -1,28 +1,79 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { Icon } from '@iconify/react'
 import Navbar from '../components/Navbar'
 import Footer from '../components/Footer'
-
-const initialTasks = [
-  { id: 1, label: 'Bench Press · 4 × 12', tag: 'Chest', done: false },
-  { id: 2, label: 'Overhead Press · 3 × 10', tag: 'Shoulders', done: true },
-  { id: 3, label: 'Lateral Raises · 3 × 15', tag: 'Shoulders', done: false },
-  { id: 4, label: 'Tricep Pushdown · 3 × 12', tag: 'Triceps', done: false },
-]
+import { workoutAPI, userAPI } from '../services/api'
+import { useAuth } from '../contexts/AuthContext'
 
 export default function Dashboard() {
-  const [tasks, setTasks] = useState(initialTasks)
+  const { user } = useAuth()
+  const [workouts, setWorkouts] = useState([])
+  const [streak, setStreak] = useState(0)
+  const [loading, setLoading] = useState(true)
   const [completed, setCompleted] = useState(false)
+  const [error, setError] = useState(null)
 
-  const toggleTask = (id) => {
-    setTasks(prev => prev.map(t => t.id === id ? { ...t, done: !t.done } : t))
+  useEffect(() => {
+    loadDashboardData()
+  }, [])
+
+  const loadDashboardData = async () => {
+    try {
+      setLoading(true)
+      const [workoutsResponse, streakResponse] = await Promise.all([
+        workoutAPI.getDailyWorkouts(),
+        userAPI.getStreak()
+      ])
+      
+      setWorkouts(workoutsResponse.data.workouts || [])
+      setStreak(streakResponse.data.currentStreak || 0)
+    } catch (error) {
+      console.error('Error loading dashboard data:', error)
+      setError('Failed to load dashboard data')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const toggleTask = async (workoutId, exerciseIndex, currentDone) => {
+    try {
+      await workoutAPI.completeExercise(workoutId, exerciseIndex, !currentDone)
+      
+      // Update local state
+      setWorkouts(prev => prev.map(workout => {
+        if (workout.id === workoutId) {
+          const updatedExercises = [...workout.exercises]
+          updatedExercises[exerciseIndex] = {
+            ...updatedExercises[exerciseIndex],
+            done: !currentDone
+          }
+          return { ...workout, exercises: updatedExercises }
+        }
+        return workout
+      }))
+    } catch (error) {
+      console.error('Error updating exercise:', error)
+      setError('Failed to update exercise')
+    }
   }
 
   const markComplete = () => {
     setCompleted(true)
     setTimeout(() => setCompleted(false), 3000)
   }
+
+  // Transform workouts to task format
+  const tasks = workouts.flatMap(workout => 
+    workout.exercises.map((exercise, index) => ({
+      id: `${workout.id}-${index}`,
+      workoutId: workout.id,
+      exerciseIndex: index,
+      label: exercise.label,
+      tag: exercise.tag,
+      done: exercise.done
+    }))
+  )
 
   return (
     <div className="font-['DM_Sans'] bg-[#080304] text-[#F0F0F0] antialiased min-h-screen selection:bg-[#E63946] selection:text-white">
@@ -40,12 +91,12 @@ export default function Dashboard() {
                 <span className="text-[11px] text-[#555]">Coach Arjun is online</span>
               </div>
             </div>
-            <h1 className="font-['Barlow_Condensed'] text-5xl text-white tracking-tight">Good morning, Rahul.</h1>
+            <h1 className="font-['Barlow_Condensed'] text-5xl text-white tracking-tight">Good morning, {user?.profile?.firstName || user?.username}.</h1>
             <p className="text-[#555] font-light mt-1.5 text-sm">Your mentor left a note. Stay focused today.</p>
           </div>
           <div className="flex gap-2">
             <div className="w-2 h-2 bg-[#E63946] rounded-full self-center mt-1" />
-            <span className="text-xs text-[#444] self-center font-light">8 day streak</span>
+            <span className="text-xs text-[#444] self-center font-light">{streak} day streak</span>
           </div>
         </div>
 
@@ -75,8 +126,7 @@ export default function Dashboard() {
             {/* Tasks */}
             <div className="divide-y divide-[#0F0D0E]">
               {tasks.map(task => (
-                <div key={task.id} onClick={() => toggleTask(task.id)}
-                  className="task-row px-7 py-4 flex items-center justify-between cursor-pointer">
+                <div key={task.id} onClick={() => toggleTask(task.workoutId, task.exerciseIndex, task.done)} className="task-row px-7 py-4 flex items-center justify-between cursor-pointer">
                   <div className="flex items-center gap-4">
                     <div style={{
                       background: task.done ? '#E63946' : '',
