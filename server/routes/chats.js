@@ -53,7 +53,7 @@ router.get('/:chatId', authenticate, async (req, res) => {
       return res.status(404).json({ error: 'Chat not found' });
     }
 
-    res.json(chat);
+    res.json({ chat });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }

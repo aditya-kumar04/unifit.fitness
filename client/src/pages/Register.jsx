@@ -22,6 +22,7 @@ export default function Register() {
   });
 
   const [step, setStep] = useState(1);
+  const [passwordError, setPasswordError] = useState('');
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -61,9 +62,11 @@ export default function Register() {
     e.preventDefault();
     
     if (formData.password !== formData.confirmPassword) {
+      setPasswordError('Passwords do not match');
       return;
     }
 
+    setPasswordError('');
     const { confirmPassword, ...submitData } = formData;
     const result = await register(submitData);
     if (result.success) {
@@ -160,10 +163,15 @@ export default function Register() {
                     name="confirmPassword"
                     value={formData.confirmPassword}
                     onChange={handleChange}
-                    className="w-full px-4 py-3 bg-[#0D0B0C] border border-[#2a2a2a] rounded-lg text-white placeholder-[#555] focus:outline-none focus:border-[#E63946] transition-colors"
+                    className={`w-full px-4 py-3 bg-[#0D0B0C] border rounded-lg text-white placeholder-[#555] focus:outline-none transition-colors ${
+                      passwordError ? 'border-red-500/50 focus:border-red-500' : 'border-[#2a2a2a] focus:border-[#E63946]'
+                    }`}
                     placeholder="Confirm your password"
                     required
                   />
+                  {passwordError && (
+                    <p className="text-red-400 text-sm mt-1">{passwordError}</p>
+                  )}
                 </div>
 
                 <button

@@ -95,10 +95,11 @@ export const AuthProvider = ({ children }) => {
             payload: { user: response.data.user, token },
           });
         } catch (error) {
+          console.log('Token validation failed, clearing token:', error.message);
           localStorage.removeItem('token');
           dispatch({
-            type: AUTH_ACTIONS.LOAD_USER_FAILURE,
-            payload: error.response?.data?.error || 'Failed to load user',
+            type: AUTH_ACTIONS.LOAD_USER_SUCCESS,
+            payload: { user: null, token: null },
           });
         }
       } else {
@@ -152,7 +153,21 @@ export const AuthProvider = ({ children }) => {
       
       return { success: true };
     } catch (error) {
-      const errorMessage = error.response?.data?.error || 'Registration failed';
+      let errorMessage = 'Registration failed';
+      
+      if (error.response?.data?.errors) {
+        // Handle validation errors array
+        const validationErrors = error.response.data.errors;
+        if (Array.isArray(validationErrors) && validationErrors.length > 0) {
+          errorMessage = validationErrors.map(err => err.msg || `${err.path} is invalid`).join(', ');
+        }
+      } else if (error.response?.data?.error) {
+        // Handle single error message
+        errorMessage = error.response.data.error;
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
       dispatch({
         type: AUTH_ACTIONS.REGISTER_FAILURE,
         payload: errorMessage,

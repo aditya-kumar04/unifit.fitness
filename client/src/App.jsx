@@ -20,40 +20,40 @@ export default function App() {
         <Routes>
           <Route path="/" element={<Landing />} />
           <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
-        <Route path="/onboarding" element={<Onboarding />} />
-        <Route path="/dashboard" element={
-          <ProtectedRoute>
-            <Dashboard />
-          </ProtectedRoute>
-        } />
-        <Route path="/chat" element={
-          <ProtectedRoute>
-            <Chat />
-          </ProtectedRoute>
-        } />
-        <Route path="/calories" element={
-          <ProtectedRoute>
-            <Calories />
-          </ProtectedRoute>
-        } />
-        <Route path="/progress" element={
-          <ProtectedRoute>
-            <Progress />
-          </ProtectedRoute>
-        } />
-        <Route path="/booking" element={
-          <ProtectedRoute>
-            <Booking />
-          </ProtectedRoute>
-        } />
-        <Route path="/mentor" element={
-          <ProtectedRoute requiredRole="mentor">
-            <MentorPanel />
-          </ProtectedRoute>
-        } />
-      </Routes>
-    </AuthProvider>
+          <Route path="/register" element={<Register />} />
+          <Route path="/onboarding" element={<Onboarding />} />
+          <Route path="/dashboard" element={
+            <ProtectedRoute>
+              <Dashboard />
+            </ProtectedRoute>
+          } />
+          <Route path="/chat" element={
+            <ProtectedRoute>
+              <Chat />
+            </ProtectedRoute>
+          } />
+          <Route path="/calories" element={
+            <ProtectedRoute>
+              <Calories />
+            </ProtectedRoute>
+          } />
+          <Route path="/progress" element={
+            <ProtectedRoute>
+              <Progress />
+            </ProtectedRoute>
+          } />
+          <Route path="/booking" element={
+            <ProtectedRoute>
+              <Booking />
+            </ProtectedRoute>
+          } />
+          <Route path="/mentor" element={
+            <ProtectedRoute requiredRole="mentor">
+              <MentorPanel />
+            </ProtectedRoute>
+          } />
+        </Routes>
+      </AuthProvider>
     </NotificationProvider>
   )
 }

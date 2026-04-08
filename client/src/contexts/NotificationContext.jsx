@@ -141,63 +141,69 @@ export const NotificationProvider = ({ children }) => {
   useEffect(() => {
     const token = localStorage.getItem('token');
     if (token) {
-      const socket = socketService.initialize(token);
-      
-      // Setup socket event listeners
-      socket.on('connection_established', () => {
-        dispatch({ type: NOTIFICATION_ACTIONS.SET_SOCKET_CONNECTED, payload: true });
-      });
-
-      socket.on('connection_lost', () => {
-        dispatch({ type: NOTIFICATION_ACTIONS.SET_SOCKET_CONNECTED, payload: false });
-      });
-
-      socket.on('notification', (notification) => {
-        dispatch({ type: NOTIFICATION_ACTIONS.ADD_NOTIFICATION, payload: notification });
+      try {
+        const socket = socketService.initialize(token);
         
-        // Show browser notification if permitted
-        if (state.settings.push && 'Notification' in window && Notification.permission === 'granted') {
-          new Notification(notification.title, {
-            body: notification.message,
-            icon: '/favicon.ico'
-          });
-        }
-      });
+        // Setup socket event listeners
+        socket.on('connection_established', () => {
+          dispatch({ type: NOTIFICATION_ACTIONS.SET_SOCKET_CONNECTED, payload: true });
+        });
 
-      socket.on('user_status_change', (data) => {
-        // Update online users list
-        const newOnlineUsers = new Set(state.onlineUsers);
-        if (data.isOnline) {
-          newOnlineUsers.add(data.userId);
-        } else {
-          newOnlineUsers.delete(data.userId);
-        }
-        dispatch({ type: NOTIFICATION_ACTIONS.SET_ONLINE_USERS, payload: newOnlineUsers });
-      });
+        socket.on('connection_lost', () => {
+          dispatch({ type: NOTIFICATION_ACTIONS.SET_SOCKET_CONNECTED, payload: false });
+        });
 
-      socket.on('user_typing', (data) => {
-        const newTypingUsers = new Map(state.typingUsers);
-        const chatTypingUsers = newTypingUsers.get(data.chatId) || new Set();
-        
-        if (data.isTyping) {
-          chatTypingUsers.add(data.userId);
-        } else {
-          chatTypingUsers.delete(data.userId);
-        }
-        
-        newTypingUsers.set(data.chatId, chatTypingUsers);
-        dispatch({ type: NOTIFICATION_ACTIONS.SET_TYPING_USERS, payload: newTypingUsers });
-      });
+        socket.on('notification', (notification) => {
+          dispatch({ type: NOTIFICATION_ACTIONS.ADD_NOTIFICATION, payload: notification });
+          
+          // Show browser notification if permitted
+          if (state.settings.push && 'Notification' in window && Notification.permission === 'granted') {
+            new Notification(notification.title, {
+              body: notification.message,
+              icon: '/favicon.ico'
+            });
+          }
+        });
 
-      // Request notification permission
-      if ('Notification' in window && Notification.permission === 'default') {
-        Notification.requestPermission();
+        socket.on('user_status_change', (data) => {
+          // Update online users list
+          const newOnlineUsers = new Set(state.onlineUsers);
+          if (data.isOnline) {
+            newOnlineUsers.add(data.userId);
+          } else {
+            newOnlineUsers.delete(data.userId);
+          }
+          dispatch({ type: NOTIFICATION_ACTIONS.SET_ONLINE_USERS, payload: newOnlineUsers });
+        });
+
+        socket.on('user_typing', (data) => {
+          const newTypingUsers = new Map(state.typingUsers);
+          const chatTypingUsers = newTypingUsers.get(data.chatId) || new Set();
+          
+          if (data.isTyping) {
+            chatTypingUsers.add(data.userId);
+          } else {
+            chatTypingUsers.delete(data.userId);
+          }
+          
+          newTypingUsers.set(data.chatId, chatTypingUsers);
+          dispatch({ type: NOTIFICATION_ACTIONS.SET_TYPING_USERS, payload: newTypingUsers });
+        });
+
+        // Request notification permission
+        if ('Notification' in window && Notification.permission === 'default') {
+          Notification.requestPermission();
+        }
+
+        return () => {
+          socketService.disconnect();
+        };
+      } catch (error) {
+        console.error('Failed to initialize socket:', error);
+        // Continue without socket support - app should still work
+        return () => {};
       }
     }
-
-    return () => {
-      socketService.disconnect();
-    };
   }, []);
 
   // Action creators

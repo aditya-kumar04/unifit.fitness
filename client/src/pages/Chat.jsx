@@ -81,18 +81,20 @@ export default function Chat() {
       return
     }
     
-    if (!user || !user._id) {
+    // Get user ID from either _id or id field
+    const userId = user?._id || user?.id;
+    if (!userId) {
       console.error('User not authenticated or missing user ID');
       return
     }
     
     try {
-      console.log('Sending message:', { text, currentChat, userId: user._id });
+      console.log('Sending message:', { text, currentChat, userId });
       
       // Add message optimistically
       const tempMessage = {
         _id: Date.now().toString(),
-        sender: { _id: user._id, username: user.username },
+        sender: { _id: userId, username: user.username },
         content: text,
         type: 'text',
         createdAt: new Date().toISOString()
@@ -142,9 +144,10 @@ export default function Chat() {
               <div className="text-center text-[#555] text-xs py-4">No conversations yet</div>
             ) : (
               chats.map(chat => {
-                const otherParticipant = chat.participants.find(p => p.user._id !== user?._id);
+                const userId = user?._id || user?.id;
+                const otherParticipant = chat.participants.find(p => p.user._id !== userId);
                 const lastMessage = chat.messages[chat.messages.length - 1];
-                const unreadCount = chat.messages.filter(m => m.sender._id !== user?._id && !m.isRead).length;
+                const unreadCount = chat.messages.filter(m => m.sender._id !== userId && !m.isRead).length;
                 
                 return (
                   <div 
@@ -202,8 +205,9 @@ export default function Chat() {
               <div>
                 <div className="text-sm text-white font-normal">
                   {(() => {
+                    const userId = user?._id || user?.id;
                     const currentChatData = chats.find(c => c._id === currentChat);
-                    const otherParticipant = currentChatData?.participants.find(p => p.user._id !== user?._id);
+                    const otherParticipant = currentChatData?.participants.find(p => p.user._id !== userId);
                     return otherParticipant?.user?.profile?.firstName 
                       ? `${otherParticipant.user.profile.firstName} ${otherParticipant.user.profile.lastName || ''} (Coach)`
                       : otherParticipant?.user?.username || 'Coach';
@@ -230,8 +234,10 @@ export default function Chat() {
 
             {currentChat ? (
             messages.map(msg => {
-              const isMentor = msg.sender?._id !== user?._id
-              const isUser = msg.sender?._id === user?._id
+              const userId = user?._id || user?.id;
+              const senderId = msg.sender?._id;
+              const isMentor = senderId !== userId
+              const isUser = senderId === userId
               const time = new Date(msg.createdAt).toLocaleTimeString('en-US', { 
                 hour: 'numeric', 
                 minute: '2-digit',

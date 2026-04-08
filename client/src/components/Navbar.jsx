@@ -1,10 +1,33 @@
 import { Link, useLocation } from 'react-router-dom'
 import { Icon } from '@iconify/react'
+import { useState } from 'react'
+import { useAuth } from '../contexts/AuthContext'
 
 // variant: "public" (landing) | "app" (inner pages) | "onboarding"
 export default function Navbar({ variant = 'app' }) {
   const location = useLocation()
+  const { user, logout } = useAuth()
+  const [menuOpen, setMenuOpen] = useState(false)
   const active = (path) => location.pathname === path
+
+  const handleLogout = async () => {
+    await logout()
+    setMenuOpen(false)
+  }
+
+  const getInitials = () => {
+    if (user?.profile?.firstName && user?.profile?.lastName) {
+      return `${user.profile.firstName[0]}${user.profile.lastName[0]}`.toUpperCase()
+    }
+    return user?.username?.[0]?.toUpperCase() || 'U'
+  }
+
+  const getUserName = () => {
+    if (user?.profile?.firstName && user?.profile?.lastName) {
+      return `${user.profile.firstName} ${user.profile.lastName}`
+    }
+    return user?.username || 'User'
+  }
 
   return (
     <nav className="fixed top-0 w-full z-50 bg-[#080304]/95 backdrop-blur-xl border-b border-[#161616]">
@@ -64,11 +87,48 @@ export default function Navbar({ variant = 'app' }) {
                 </Link>
               ))}
             </div>
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-full bg-[#E63946] flex items-center justify-center">
-                <Icon icon="solar:user-linear" className="text-white text-sm" />
-              </div>
-              <span className="text-sm text-[#888] hidden lg:block">Rahul M.</span>
+            {/* User Profile Dropdown */}
+            <div className="relative">
+              <button
+                onClick={() => setMenuOpen(!menuOpen)}
+                className="flex items-center gap-3 hover:opacity-80 transition-opacity"
+              >
+                <div className="w-8 h-8 rounded-full bg-[#E63946] flex items-center justify-center text-xs font-semibold text-white">
+                  {getInitials()}
+                </div>
+                <span className="text-sm text-[#888] hidden lg:block">{getUserName()}</span>
+                <Icon
+                  icon="solar:chevron-down-linear"
+                  className={`text-sm text-[#888] hidden lg:block transition-transform ${menuOpen ? 'rotate-180' : ''}`}
+                />
+              </button>
+
+              {/* Dropdown Menu */}
+              {menuOpen && (
+                <div className="absolute right-0 mt-2 w-48 bg-[#161616] border border-[#2a2a2a] rounded-lg shadow-lg z-50">
+                  <div className="px-4 py-3 border-b border-[#2a2a2a]">
+                    <p className="text-sm font-medium text-white">{getUserName()}</p>
+                    <p className="text-xs text-[#555]">{user?.email}</p>
+                  </div>
+                  <div className="py-2">
+                    <Link
+                      to="/dashboard"
+                      onClick={() => setMenuOpen(false)}
+                      className="block px-4 py-2 text-sm text-[#ccc] hover:bg-[#1f1f1f] hover:text-white transition-colors"
+                    >
+                      <Icon icon="solar:home-linear" className="inline mr-2" />
+                      Dashboard
+                    </Link>
+                    <button
+                      onClick={handleLogout}
+                      className="w-full text-left px-4 py-2 text-sm text-[#ccc] hover:bg-[#1f1f1f] hover:text-white transition-colors"
+                    >
+                      <Icon icon="solar:logout-linear" className="inline mr-2" />
+                      Sign Out
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           </>
         )}

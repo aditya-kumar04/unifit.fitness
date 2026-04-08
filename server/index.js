@@ -85,7 +85,7 @@ const limiter = rateLimit({
 app.use(limiter);
 
 // Stricter rate limiting for auth routes
-const authLimiter = createRateLimiter(15 * 60 * 1000, 5); // 5 requests per 15 minutes
+const authLimiter = createRateLimiter(15 * 60 * 1000, 100); // 100 requests per 15 minutes
 app.use('/api/auth', authLimiter);
 
 // Health check endpoint

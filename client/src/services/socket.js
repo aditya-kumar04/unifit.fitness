@@ -13,7 +13,11 @@ class SocketService {
       this.disconnect();
     }
 
-    this.socket = io(process.env.VITE_API_URL.replace('/api', '') || 'http://localhost:5001', {
+    // Get API URL and remove /api suffix to get base URL
+    const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
+    const baseUrl = apiUrl.replace('/api', '') || 'http://localhost:5001';
+
+    this.socket = io(baseUrl, {
       auth: {
         token
       },
