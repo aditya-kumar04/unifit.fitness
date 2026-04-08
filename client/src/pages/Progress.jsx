@@ -3,35 +3,118 @@ import { Link } from 'react-router-dom'
 import { Icon } from '@iconify/react'
 import Navbar from '../components/Navbar'
 import Footer from '../components/Footer'
-
-const TODAY = 12
-const WEEK_DATA = [
-  { day: 'Day 1', kg: '92.0' },
-  { day: 'Day 4', kg: '91.3' },
-  { day: 'Day 6', kg: '90.8' },
-  { day: 'Day 9', kg: '90.1' },
-  { day: 'Today', kg: '89.2', highlight: true },
-]
+import { progressAPI } from '../services/api'
+import { useAuth } from '../contexts/AuthContext'
 
 export default function Progress() {
+  const { user } = useAuth()
   const [photoSlot, setPhotoSlot] = useState(null)
+  const [weightHistory, setWeightHistory] = useState([])
+  const [photos, setPhotos] = useState([])
+  const [analytics, setAnalytics] = useState(null)
+  const [goals, setGoals] = useState(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
+  const fileInputRef = useRef(null)
 
   useEffect(() => {
+    loadProgressData()
+    setupRevealAnimations()
+  }, [])
+
+  const setupRevealAnimations = () => {
     const els = document.querySelectorAll('.reveal')
     const observer = new IntersectionObserver(entries => {
       entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); observer.unobserve(e.target) } })
     }, { threshold: 0.1 })
     els.forEach(el => observer.observe(el))
     return () => observer.disconnect()
-  }, [])
+  }
 
-  const handleWeek4Upload = (e) => {
+  const loadProgressData = async () => {
+    try {
+      setLoading(true)
+      const [analyticsResponse, goalsResponse, photosResponse] = await Promise.all([
+        progressAPI.getAnalytics('month').catch(() => ({ data: { weight: { history: [] } } })),
+        progressAPI.getGoals().catch(() => ({ data: { goals: null } })),
+        progressAPI.getPhotos({ limit: 10 }).catch(() => ({ data: { photos: [] } }))
+      ])
+      
+      setAnalytics(analyticsResponse.data)
+      setGoals(goalsResponse.data.goals)
+      setPhotos(photosResponse.data.photos || [])
+      setWeightHistory(analyticsResponse.data.weight?.history || [])
+    } catch (error) {
+      console.error('Error loading progress data:', error)
+      // Set default empty data instead of error
+      setAnalytics({ weight: { history: [] } })
+      setGoals(null)
+      setPhotos([])
+      setWeightHistory([])
+      setError(null)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handlePhotoUpload = async (e) => {
     const file = e.target.files?.[0]
     if (!file) return
-    const reader = new FileReader()
-    reader.onload = evt => setPhotoSlot(evt.target.result)
-    reader.readAsDataURL(file)
+    
+    try {
+      const formData = new FormData()
+      formData.append('photo', file)
+      formData.append('photoType', 'progress')
+      
+      await progressAPI.uploadPhoto(formData).catch(() => {
+        // Handle upload error gracefully
+        console.log('Photo upload failed, but continuing...')
+      })
+      
+      // Reload photos
+      const photosResponse = await progressAPI.getPhotos({ limit: 10 }).catch(() => ({ data: { photos: [] } }))
+      setPhotos(photosResponse.data.photos || [])
+      
+      // Show preview
+      const reader = new FileReader()
+      reader.onload = evt => setPhotoSlot(evt.target.result)
+      reader.readAsDataURL(file)
+      
+      // Clear preview after 3 seconds
+      setTimeout(() => setPhotoSlot(null), 3000)
+    } catch (error) {
+      console.error('Error uploading photo:', error)
+      setError(null) // Don't show error, just handle gracefully
+    }
   }
+
+  const handleWeek4Upload = (e) => {
+    handlePhotoUpload(e)
+  }
+
+  // Get current day of month (for 30-day timeline)
+  const TODAY = new Date().getDate()
+
+  const logWeight = async (weight) => {
+    try {
+      await progressAPI.logWeight({ value: weight, unit: 'kg' }).catch(() => {
+        console.log('Weight logging failed, but continuing...')
+      })
+      await loadProgressData() // Reload data
+    } catch (error) {
+      console.error('Error logging weight:', error)
+      setError(null) // Don't show error, just handle gracefully
+    }
+  }
+
+  // Static data for the chart when no real data is available
+  const WEEK_DATA = [
+    { day: 'Day 1', kg: '92.0', highlight: false },
+    { day: 'Day 8', kg: '91.2', highlight: false },
+    { day: 'Day 15', kg: '90.5', highlight: false },
+    { day: 'Day 22', kg: '89.8', highlight: false },
+    { day: 'Today', kg: '89.2', highlight: true },
+  ]
 
   return (
     <div className="font-['DM_Sans'] bg-[#080304] text-[#F0F0F0] antialiased min-h-screen selection:bg-[#E63946] selection:text-white">
@@ -42,16 +125,20 @@ export default function Progress() {
           <div>
             <span className="text-[#E63946] text-[11px] uppercase tracking-[0.2em] block mb-3">30-Day Journey</span>
             <h1 className="font-['Barlow_Condensed'] text-5xl text-white tracking-tight">Your Progress</h1>
-            <p className="text-[#555] font-light mt-1.5 text-sm">Day 12 · You're ahead of schedule.</p>
+            <p className="text-[#555] font-light mt-1.5 text-sm">
+              {loading ? 'Loading...' : `Progress Score: ${analytics?.progressScore || 0}/100`}
+            </p>
           </div>
           <div className="flex gap-3">
             <div className="bg-[#0D0B0C] border border-[#E63946]/40 rounded-xl px-5 py-3 text-center">
-              <div className="font-['Bebas_Neue'] text-3xl text-[#E63946]">−2.8</div>
-              <div className="text-[10px] text-[#555] uppercase tracking-widest">kg lost</div>
+              <div className="font-['Bebas_Neue'] text-3xl text-[#E63946]">
+                {analytics?.weight?.trend?.change ? (analytics.weight.trend.change > 0 ? '+' : '') + Number(analytics.weight.trend.change).toFixed(1) : '0.0'}
+              </div>
+              <div className="text-[10px] text-[#555] uppercase tracking-widest">kg change</div>
             </div>
             <div className="bg-[#0D0B0C] border border-[#1A1A1A] rounded-xl px-5 py-3 text-center">
-              <div className="font-['Bebas_Neue'] text-3xl text-white">18</div>
-              <div className="text-[10px] text-[#555] uppercase tracking-widest">days left</div>
+              <div className="font-['Bebas_Neue'] text-3xl text-white">{photos.length}</div>
+              <div className="text-[10px] text-[#555] uppercase tracking-widest">photos</div>
             </div>
           </div>
         </div>
@@ -133,7 +220,13 @@ export default function Progress() {
             </div>
             <label className="cursor-pointer btn-primary text-sm px-5 py-2.5 rounded-xl flex items-center gap-2 font-normal">
               <Icon icon="solar:camera-linear" className="text-base" /> Upload This Week
-              <input type="file" accept="image/*" className="hidden" />
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={handlePhotoUpload}
+              />
             </label>
           </div>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
