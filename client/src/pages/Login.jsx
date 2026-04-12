@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Icon } from '@iconify/react';
+import { useGoogleLogin } from '@react-oauth/google';
 import { useAuth } from '../contexts/AuthContext';
 
 export default function Login() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { login, loading, error, clearError } = useAuth();
+  const { login, googleLogin: authGoogleLogin, loading, error, clearError } = useAuth();
   
   const [formData, setFormData] = useState({
     email: '',
@@ -31,6 +32,22 @@ export default function Login() {
     }
   };
 
+  const handleGoogleSuccess = async (credentialResponse) => {
+    try {
+      const result = await authGoogleLogin(credentialResponse.credential);
+      if (result.success) {
+        navigate(from, { replace: true });
+      }
+    } catch (error) {
+      console.error('Google login error:', error);
+    }
+  };
+
+  const googleLogin = useGoogleLogin({
+    onSuccess: handleGoogleSuccess,
+    onError: () => console.log('Google login failed'),
+  });
+
   return (
     <div className="font-['DM_Sans'] bg-[#080304] text-[#F0F0F0] antialiased min-h-screen flex items-center justify-center pt-16">
       <div className="w-full max-w-md px-6">
@@ -52,6 +69,23 @@ export default function Login() {
               <p className="text-red-400 text-sm">{error}</p>
             </div>
           )}
+
+          {/* Google Sign-In Button */}
+          <button
+            onClick={() => googleLogin()}
+            disabled={loading}
+            className="w-full mb-4 px-4 py-3 bg-white text-[#080304] font-medium rounded-lg hover:bg-gray-100 transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <Icon icon="logos:google-icon" className="text-lg" />
+            Sign in with Google
+          </button>
+
+          {/* Divider */}
+          <div className="flex items-center gap-3 mb-4">
+            <div className="flex-1 h-px bg-[#2a2a2a]"></div>
+            <span className="text-[#555] text-xs">OR</span>
+            <div className="flex-1 h-px bg-[#2a2a2a]"></div>
+          </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>

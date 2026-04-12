@@ -1,4 +1,5 @@
 import { Routes, Route } from 'react-router-dom'
+import { GoogleOAuthProvider } from '@react-oauth/google'
 import { AuthProvider } from './contexts/AuthContext'
 import { NotificationProvider } from './contexts/NotificationContext'
 import ProtectedRoute from './components/ProtectedRoute'
@@ -14,10 +15,13 @@ import Booking from './pages/Booking'
 import MentorPanel from './pages/MentorPanel'
 
 export default function App() {
+  const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
+  
   return (
-    <NotificationProvider>
-      <AuthProvider>
-        <Routes>
+    <GoogleOAuthProvider clientId={googleClientId || ''}>
+      <NotificationProvider>
+        <AuthProvider>
+          <Routes>
           <Route path="/" element={<Landing />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
@@ -52,8 +56,9 @@ export default function App() {
               <MentorPanel />
             </ProtectedRoute>
           } />
-        </Routes>
-      </AuthProvider>
-    </NotificationProvider>
+          </Routes>
+        </AuthProvider>
+      </NotificationProvider>
+    </GoogleOAuthProvider>
   )
 }

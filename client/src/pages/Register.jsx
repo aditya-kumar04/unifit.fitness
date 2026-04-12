@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Icon } from '@iconify/react';
+import { useGoogleLogin } from '@react-oauth/google';
 import { useAuth } from '../contexts/AuthContext';
 
 export default function Register() {
   const navigate = useNavigate();
-  const { register, loading, error, clearError } = useAuth();
+  const { register, googleLogin: authGoogleLogin, loading, error, clearError } = useAuth();
   
   const [formData, setFormData] = useState({
     username: '',
@@ -23,6 +24,44 @@ export default function Register() {
 
   const [step, setStep] = useState(1);
   const [passwordError, setPasswordError] = useState('');
+  const [fieldErrors, setFieldErrors] = useState({});
+
+  const validateField = (name, value) => {
+    const errors = {};
+    
+    if (name === 'username' || !name) {
+      const username = value || formData.username;
+      if (!username.trim()) {
+        errors.username = 'Username is required';
+      } else if (username.length < 3) {
+        errors.username = 'Username must be at least 3 characters';
+      } else if (username.length > 30) {
+        errors.username = 'Username must not exceed 30 characters';
+      } else if (!/^[a-zA-Z0-9_-]+$/.test(username)) {
+        errors.username = 'Username can only contain letters, numbers, underscores, and hyphens';
+      }
+    }
+    
+    if (name === 'email' || !name) {
+      const email = value || formData.email;
+      if (!email.trim()) {
+        errors.email = 'Email is required';
+      } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        errors.email = 'Please enter a valid email';
+      }
+    }
+    
+    if (name === 'password' || !name) {
+      const password = value || formData.password;
+      if (!password) {
+        errors.password = 'Password is required';
+      } else if (password.length < 6) {
+        errors.password = 'Password must be at least 6 characters';
+      }
+    }
+    
+    return errors;
+  };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -43,6 +82,14 @@ export default function Register() {
       }));
     }
     
+    // Clear field error for this field when user starts typing
+    if (name in fieldErrors) {
+      setFieldErrors(prev => ({
+        ...prev,
+        [name]: ''
+      }));
+    }
+    
     if (error) clearError();
   };
 
@@ -58,8 +105,24 @@ export default function Register() {
     }));
   };
 
+  const handleNextStep = () => {
+    const errors = validateField();
+    if (Object.keys(errors).length === 0) {
+      setStep(2);
+      setFieldErrors({});
+    } else {
+      setFieldErrors(errors);
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    const errors = validateField();
+    if (Object.keys(errors).length > 0) {
+      setFieldErrors(errors);
+      return;
+    }
     
     if (formData.password !== formData.confirmPassword) {
       setPasswordError('Passwords do not match');
@@ -73,6 +136,22 @@ export default function Register() {
       navigate('/dashboard');
     }
   };
+
+  const handleGoogleSuccess = async (credentialResponse) => {
+    try {
+      const result = await authGoogleLogin(credentialResponse.credential);
+      if (result.success) {
+        navigate('/dashboard');
+      }
+    } catch (error) {
+      console.error('Google login error:', error);
+    }
+  };
+
+  const googleLogin = useGoogleLogin({
+    onSuccess: handleGoogleSuccess,
+    onError: () => console.log('Google login failed'),
+  });
 
   const fitnessGoals = ['Fat Loss', 'Muscle Gain', 'Strength', 'Endurance', 'Consistency'];
 
@@ -114,6 +193,23 @@ export default function Register() {
             </div>
           )}
 
+          {/* Google Sign-In Button */}
+          <button
+            onClick={() => googleLogin()}
+            disabled={loading}
+            className="w-full mb-4 px-4 py-3 bg-white text-[#080304] font-medium rounded-lg hover:bg-gray-100 transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <Icon icon="logos:google-icon" className="text-lg" />
+            Sign up with Google
+          </button>
+
+          {/* Divider */}
+          <div className="flex items-center gap-3 mb-4">
+            <div className="flex-1 h-px bg-[#2a2a2a]"></div>
+            <span className="text-[#555] text-xs">OR</span>
+            <div className="flex-1 h-px bg-[#2a2a2a]"></div>
+          </div>
+
           <form onSubmit={handleSubmit} className="space-y-4">
             {step === 1 && (
               <>
@@ -124,10 +220,14 @@ export default function Register() {
                     name="username"
                     value={formData.username}
                     onChange={handleChange}
-                    className="w-full px-4 py-3 bg-[#0D0B0C] border border-[#2a2a2a] rounded-lg text-white placeholder-[#555] focus:outline-none focus:border-[#E63946] transition-colors"
+                    className={`w-full px-4 py-3 bg-[#0D0B0C] border rounded-lg text-white placeholder-[#555] focus:outline-none transition-colors ${
+                      fieldErrors.username ? 'border-red-500/50 focus:border-red-500' : 'border-[#2a2a2a] focus:border-[#E63946]'
+                    }`}
                     placeholder="Choose a username"
-                    required
                   />
+                  {fieldErrors.username && (
+                    <p className="text-red-400 text-sm mt-1">{fieldErrors.username}</p>
+                  )}
                 </div>
 
                 <div>
@@ -137,10 +237,14 @@ export default function Register() {
                     name="email"
                     value={formData.email}
                     onChange={handleChange}
-                    className="w-full px-4 py-3 bg-[#0D0B0C] border border-[#2a2a2a] rounded-lg text-white placeholder-[#555] focus:outline-none focus:border-[#E63946] transition-colors"
+                    className={`w-full px-4 py-3 bg-[#0D0B0C] border rounded-lg text-white placeholder-[#555] focus:outline-none transition-colors ${
+                      fieldErrors.email ? 'border-red-500/50 focus:border-red-500' : 'border-[#2a2a2a] focus:border-[#E63946]'
+                    }`}
                     placeholder="Enter your email"
-                    required
                   />
+                  {fieldErrors.email && (
+                    <p className="text-red-400 text-sm mt-1">{fieldErrors.email}</p>
+                  )}
                 </div>
 
                 <div>
@@ -150,10 +254,14 @@ export default function Register() {
                     name="password"
                     value={formData.password}
                     onChange={handleChange}
-                    className="w-full px-4 py-3 bg-[#0D0B0C] border border-[#2a2a2a] rounded-lg text-white placeholder-[#555] focus:outline-none focus:border-[#E63946] transition-colors"
+                    className={`w-full px-4 py-3 bg-[#0D0B0C] border rounded-lg text-white placeholder-[#555] focus:outline-none transition-colors ${
+                      fieldErrors.password ? 'border-red-500/50 focus:border-red-500' : 'border-[#2a2a2a] focus:border-[#E63946]'
+                    }`}
                     placeholder="Create a password"
-                    required
                   />
+                  {fieldErrors.password && (
+                    <p className="text-red-400 text-sm mt-1">{fieldErrors.password}</p>
+                  )}
                 </div>
 
                 <div>
@@ -167,7 +275,6 @@ export default function Register() {
                       passwordError ? 'border-red-500/50 focus:border-red-500' : 'border-[#2a2a2a] focus:border-[#E63946]'
                     }`}
                     placeholder="Confirm your password"
-                    required
                   />
                   {passwordError && (
                     <p className="text-red-400 text-sm mt-1">{passwordError}</p>
@@ -176,7 +283,7 @@ export default function Register() {
 
                 <button
                   type="button"
-                  onClick={() => setStep(2)}
+                  onClick={handleNextStep}
                   className="w-full bg-[#E63946] hover:bg-[#d62839] text-white font-medium py-3 rounded-lg transition-colors"
                 >
                   Next

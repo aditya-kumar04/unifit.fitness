@@ -27,6 +27,10 @@ const userSchema = new mongoose.Schema({
     enum: ['student', 'mentor', 'admin'],
     default: 'student'
   },
+  oauth: {
+    googleId: { type: String, unique: true, sparse: true },
+    provider: { type: String, enum: ['google'], default: null }
+  },
   profile: {
     firstName: { type: String, trim: true },
     lastName: { type: String, trim: true },
