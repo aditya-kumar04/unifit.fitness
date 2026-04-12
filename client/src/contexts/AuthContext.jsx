@@ -153,17 +153,21 @@ export const AuthProvider = ({ children }) => {
       
       return { success: true };
     } catch (error) {
-      let errorMessage = 'Registration failed';
+      let errorMessage = 'Registration failed. Please try again.';
       
       if (error.response?.data?.errors) {
         // Handle validation errors array
         const validationErrors = error.response.data.errors;
         if (Array.isArray(validationErrors) && validationErrors.length > 0) {
-          errorMessage = validationErrors.map(err => err.msg || `${err.path} is invalid`).join(', ');
+          errorMessage = validationErrors
+            .map(err => err.msg || err.param || 'Invalid input')
+            .join(', ');
         }
       } else if (error.response?.data?.error) {
         // Handle single error message
         errorMessage = error.response.data.error;
+      } else if (error.code === 'ERR_NETWORK' || !error.response) {
+        errorMessage = 'Network error. Please check your connection and try again.';
       } else if (error.message) {
         errorMessage = error.message;
       }
@@ -194,12 +198,46 @@ export const AuthProvider = ({ children }) => {
     dispatch({ type: AUTH_ACTIONS.CLEAR_ERROR });
   };
 
+  // Google login function
+  const googleLogin = async (googleToken) => {
+    try {
+      dispatch({ type: AUTH_ACTIONS.LOGIN_START });
+      const response = await authAPI.googleVerify(googleToken);
+      const { user, token } = response.data;
+      
+      localStorage.setItem('token', token);
+      localStorage.setItem('user', JSON.stringify(user));
+      
+      dispatch({
+        type: AUTH_ACTIONS.LOGIN_SUCCESS,
+        payload: { user, token },
+      });
+      
+      return { success: true };
+    } catch (error) {
+      let errorMessage = 'Google login failed. Please try again.';
+      
+      if (error.response?.data?.error) {
+        errorMessage = error.response.data.error;
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
+      dispatch({
+        type: AUTH_ACTIONS.LOGIN_FAILURE,
+        payload: errorMessage,
+      });
+      return { success: false, error: errorMessage };
+    }
+  };
+
   const value = {
     ...state,
     login,
     register,
     logout,
     clearError,
+    googleLogin,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

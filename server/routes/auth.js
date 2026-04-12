@@ -6,10 +6,24 @@ const User = require('../models/User');
 
 // Register new user
 router.post('/register', [
-  body('username').isLength({ min: 3, max: 30 }).trim().escape(),
-  body('email').isEmail().normalizeEmail(),
-  body('password').isLength({ min: 6 }),
-  body('role').optional().isIn(['student', 'mentor'])
+  body('username')
+    .trim()
+    .isLength({ min: 3, max: 30 })
+    .withMessage('Username must be between 3 and 30 characters')
+    .matches(/^[a-zA-Z0-9_-]+$/)
+    .withMessage('Username can only contain letters, numbers, underscores, and hyphens')
+    .escape(),
+  body('email')
+    .isEmail()
+    .withMessage('Please provide a valid email address')
+    .normalizeEmail(),
+  body('password')
+    .isLength({ min: 6 })
+    .withMessage('Password must be at least 6 characters long'),
+  body('role')
+    .optional()
+    .isIn(['student', 'mentor'])
+    .withMessage('Role must be either student or mentor')
 ], async (req, res) => {
   try {
     const errors = validationResult(req);
@@ -25,7 +39,10 @@ router.post('/register', [
     });
 
     if (existingUser) {
-      return res.status(400).json({ error: 'User with this email or username already exists' });
+      if (existingUser.email === email) {
+        return res.status(400).json({ error: 'Email already registered. Please use a different email or login.' });
+      }
+      return res.status(400).json({ error: 'Username already taken. Please choose a different username.' });
     }
 
     // Create new user
@@ -63,7 +80,8 @@ router.post('/register', [
       }
     });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    console.error('Registration error:', error);
+    res.status(500).json({ error: 'An error occurred during registration. Please try again.' });
   }
 });
 

@@ -15,6 +15,7 @@ const initializeSocketIO = require('./utils/socket');
 
 // Import routes
 const authRoutes = require('./routes/auth');
+const googleAuthRoutes = require('./routes/google-auth');
 const adminRoutes = require('./routes/admin');
 const chatRoutes = require('./routes/chats');
 const workoutRoutes = require('./routes/workouts');
@@ -118,6 +119,7 @@ app.get('/api/health', async (req, res) => {
 
 // Route handlers
 app.use('/api/auth', authRoutes);
+app.use('/api/auth', googleAuthRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/chats', chatRoutes);
 app.use('/api/workouts', workoutRoutes);
